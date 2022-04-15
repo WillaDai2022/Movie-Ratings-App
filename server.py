@@ -54,6 +54,47 @@ def show_user(user_id):
 
     return render_template("user_details.html", user = user)
 
+
+@app.route("/users", methods = ["post"])
+def register_user():
+    """Create a new user"""
+
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    user = crud.get_user_by_email(email)
+
+    if user:
+        flash("Email address already exists. Please try again with another email address!")
+    else:
+        new_user = crud.create_user(email, password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Your account was created successfully and you can now log in.")
+
+    return redirect("/")
+
+@app.route("/login", methods = ["POST"])
+def login():
+    """Process user login."""
+
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    user = crud.get_user_by_email(email)
+
+    if user and user.password == password:
+        # Log in user by storing the user's primary key in session
+        session["user_id"] = user.user_id
+        flash(f"Welcome back, User {user.user_id}")
+    else:
+        flash("The email or password you entered was incorrect.")
+
+    return redirect("/")
+
+
+
+
 if __name__ == "__main__":
     # connect to database before app.run gets called. 
     # If not, Flask won’t be able to access your database
